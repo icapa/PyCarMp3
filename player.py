@@ -3,8 +3,10 @@ import os
 import commands
 import time
 import threading
+import thread
 import random
 from subprocess import Popen, PIPE, STDOUT
+from socket import *
 #-------------------------------------------------------------------
 # Funcion para imprimir la lista de ficheros separado en directorios
 #-------------------------------------------------------------------
@@ -63,25 +65,6 @@ def StopReproduccion(p):
 	return grep_stdout
 
 #-----------------------------------------------------
-# Pasa a la siguiente cancion dentro de la carpeta
-# devuelve indice de fichero. Directorio
-# sera el mismo
-#-----------------------------------------------------
-def SiguienteCancion(lista_ficheros,directorio,fichero):
-	actual_lista = lista_ficheros[directorio]	# Lista de dir actual
-	if fichero== (len(actual_lista)-1):			# Si es la ultima
-		return 0								# Volvemos al principio
-	return fichero+1
-
-#-----------------------------------------------------
-# Pasa de directorio
-#-----------------------------------------------------
-def SiguienteDirectorio(lista_ficheros,directorio,fichero):
-	if directorio==(len(lista_ficheros)-1):
-		return 0
-	directorio=directorio+1
-	return directorio
-#-----------------------------------------------------
 # Devuelve si es la ultima cancion del directorio
 #----------------------------------------------------
 def UltimaCancion(lista_dicheros,directorio,fichero):
@@ -124,6 +107,40 @@ def GeneraListaCompleta(lista_ficheros):
 	#	print p
 	return lista_completa
 
+#--------------------------------------------
+# Thread que maneja las comunicaciones
+#--------------------------------------------
+def HiloComunicaciones(valor1,valor2):
+	BUFF=1024
+	HOST=''
+	PORT=9999
+	ADDR = (HOST,PORT)
+	serversock = socket(AF_INET,SOCK_STREAM)
+	serversock.setsockopt(SOL_SOCKET,SO_REUSEADDR,1)
+	serversock.bind(ADDR)
+	serversock.listen(5)
+	while 1:
+		print 'Esperando conexion...'
+		clientsock,addr = serversock.accept()
+		print 'Conectado...',addr
+		while 1:
+			data = clientsock.recv(BUFF)
+			if not data: continue
+			print 'data:' + repr(data)
+			if 'next' in data:
+				print 'Siguiente cancion'
+				StopReproduccion(p)
+			
+#-------------------------------------
+# La logica para la siguiente cancion
+#------------------------------------
+def SiguienteCancion():
+	global lista_ficheros		#Esto esta separado en directorios
+	global lista_completa		#Esto es una lista completa
+	global indice_directorio	#Indice directorio actual
+	global indice_fichero		#Indice fichero actual dentro del directorio
+	return lista_completa[0]
+
 #############################################
 ########### Programa principal ##############
 #############################################
@@ -139,6 +156,12 @@ num_dir = len(lista_ficheros)
 indice_directorio=-1
 indice_fichero=-1
 fichero_actual=''
+p=-1
+
+modo=2	#0 continuo, 1 directorio actual, 2 aleatorio continuo, 3 aleatorio directorio
+# Arrancamos el hilo de comunicaciones
+#thread.start_new_thread(HiloComunicaciones,(0,0))
+
 
 while True:
 	if num_dir!=0:
@@ -150,20 +173,18 @@ while True:
 
 		while True:
 			# Si es modo shuffle
-			indice_total=GeneraShuffleFile(lista_completa)
-			print 'Reproduciendo !! ' + str(indice_total[0]) + ',' + str(indice_total[1])+','+str(indice_total[2])+','+indice_total[3]
-#			fichero_actual=DameFichero(lista_ficheros,indice_total[0],indice_total[1])
+			indice_total=SiguienteCancion()	# Esta hace toda la logistica
+			#-- Para saber lo que tocamos
+			print '-----=====##########=====-----'
+			print 'Play Num: \t'+ str(indice_total[0]) 
+			print 'Dir Num:  \t'+ str(indice_total[1])
+			print 'File Num: \t'+ str(indice_total[2])
+			print 'File Name:\t'+ indice_total[3]
+			print '-----=====##########=====-----'
 			p=PlayFichero(player,indice_total[3])
-
+			#-- End ---
+			time.sleep(2)
 			p.wait()
-
-			#if UltimaCancion(lista_ficheros,indice_directorio,indice_fichero)==True:
-			#	print 'Ultima cancion...pasamos de directorio'
-			#	indice_directorio=SiguienteDirectorio(lista_ficheros,indice_directorio,indice_fichero)
-			#	indice_fichero=0;
-			#else:
-			#	print 'Siguiente cancion'
-				#indice_fichero=SiguienteCancion(lista_ficheros,indice_directorio,indice_fichero)
 	else:
 
 		lista_ficheros=CreaLista(raiz)
