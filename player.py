@@ -54,7 +54,10 @@ def DameFichero(lista_ficheros,indice_dir,indice_file):
 # Reproduce un fichero y devuelve el descriptor para tratar sobre el
 #-------------------------------------------------------------------
 def PlayFichero(player,fichero):
-	p = Popen([player,'-o','local',fichero] stdout=PIPE,stdin=PIPE,stderr=STDOUT)
+	# = Popen([player,'-o','local',fichero],stdout=PIPE,stdin=PIPE,stderr=STDOUT)
+	# TODO cambiar 
+	print player,fichero
+	p = Popen([player,fichero],stdout=PIPE,stdin=PIPE,stderr=STDOUT)
 	return p
 
 #---------------------------------------------------
@@ -92,25 +95,54 @@ def StopReproduccion(p):
 # Thread que maneja las comunicaciones
 #--------------------------------------------
 def HiloComunicaciones(valor1,valor2):
+	global modo
+	global siguiente_usuario
 	BUFF=1024
 	HOST=''
 	PORT=9999
 	ADDR = (HOST,PORT)
-	serversock = socket(AF_INET,SOCK_STREAM)
-	serversock.setsockopt(SOL_SOCKET,SO_REUSEADDR,1)
-	serversock.bind(ADDR)
-	serversock.listen(5)
 	while 1:
+		serversock = socket(AF_INET,SOCK_STREAM)
+		serversock.setsockopt(SOL_SOCKET,SO_REUSEADDR,1)
+		serversock.bind(ADDR)
+		serversock.listen(5)
 		print 'Esperando conexion...'
 		clientsock,addr = serversock.accept()
 		print 'Conectado...',addr
 		while 1:
 			data = clientsock.recv(BUFF)
-			if not data: continue
+			if not data:
+				time.sleep(1) 
+				continue
 			print 'data:' + repr(data)
 			if 'next' in data:
 				print 'Siguiente cancion'
+				siguiente_usuario=1 #esto es hacia adelante
 				StopReproduccion(p)
+			elif 'prev' in data:
+				print 'Anterior cancion'
+				siguiente_usuario=2
+				StopReproduccion(p)
+			elif 'next_folder' in data:
+				print 'Carpeta siguiente'
+				siguiente_usuario=3
+				StopReproduccion(p)
+			elif 'prev_folder' in data:
+				print 'Carpeta anterior'
+				siguiente_usuario=4
+				StopReproduccion(p)
+			elif 'modo' in data:
+				sModo = data.split("=")
+				if len(sModo)==2:
+					elModo = int(sModo[1])
+					if elModo>=0 and elModo<4:
+						modo=elModo
+						print 'Cambiando a modo: '+str(modo)
+
+				
+
+
+
 			
 #-------------------------------------
 # La logica para la siguiente cancion
@@ -179,11 +211,37 @@ def SiguienteCancion(adelante):
 		indice_fichero=ran_file
 	return (lista_ficheros[indice_directorio])[indice_fichero]
 
+
+def SiguienteCarpeta(adelante):
+	global indice_directorio
+	global indice_fichero
+	global lista_ficheros
+	if modo==0 or modo==1 or modo==3: #odo normal, carpeta o aleatorio carpeta
+		if indice_directorio==-1:
+			indice_directorio=0
+			indice_fichero=0
+		else:
+			if adelante==True:
+				if indice_directorio==len(lista_ficheros)-1:
+					indice_directorio=0
+				else:
+					indice_directorio=indice_directorio+1
+			else:
+				if indice_directorio==0:
+					indice_directorio=len(lista_ficheros)-1
+				else:
+					indice_directorio=indice_directorio-1
+			indice_fichero=0	# Siempre empezamos por la uno
+	return (lista_ficheros[indice_directorio])[indice_fichero]
+
+
 #############################################
 ########### Programa principal ##############
 #############################################
 raiz='/media/pendrive/'
-player='/usr/bin/omxplayer'
+# TODO
+#layer='/usr/bin/omxplayer'
+player='/usr/bin/mplayer'
 
 lista_ficheros=CreaLista(raiz)
 num_dir = len(lista_ficheros)
@@ -195,20 +253,30 @@ p=-1
 siguiente_usuario=0	# 0: No toco el usuario, 1: Movemos para arriba cancion 2: Movemos para abajo
 modo=3	#0 continuo, 1 directorio actual, 2 aleatorio continuo, 3 aleatorio directorio
 # Arrancamos el hilo de comunicaciones
-#thread.start_new_thread(HiloComunicaciones,(0,0))
+thread.start_new_thread(HiloComunicaciones,(0,0))
 
 
 while True:
 	if num_dir!=0:
 		print 'Hay '+str(num_dir)+' directorios de musica!!'
 		while True:
-			if siguiente_usuario==0:			# El usuario no toco se avanza
+			if siguiente_usuario==0:			# El usuario no toco se avanza normal
 				nombre=SiguienteCancion(True)	
 			elif siguiente_usuario==1:			# El usuario pulso hacia adelante
+				print 'El usuario NEXT'
 				nombre=SiguienteCancion(True)
+				siguiete_usuario=0
 			elif siguiente_usuario==2:			# El usuario pulso hacia atras
+				print 'El usuario PREV'
 				nombre=SiguienteCancion(False)
-			siguiente_usuario=0	#				# Limpiamos el flag de pulsar el usuario
+			elif siguiente_usuario==3:
+				print 'El usuario Carpeta NEXT'
+				nombre = SiguienteCarpeta(True)
+			elif siguiente_usuario==4:
+				print 'El usuario Carpeta PREV'
+				nombre = SiguienteCarpeta(False)
+			siguiente_usuario=0
+			
 				
 			#-- Para saber lo que tocamos
 			print '-----=====##########=====-----'
