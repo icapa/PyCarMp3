@@ -10,10 +10,10 @@ from socket import *
 #-------------------------------------------------------------------
 # Funcion para imprimir la lista de ficheros separado en directorios
 #-------------------------------------------------------------------
-def DebugLista(lista_completa):
+def DebugLista(laLista):
 	indice=0
-	print 'Total de directorios' + str(len(lista_completa))
-	for a in lista_completa:
+	print 'Total de directorios' + str(len(laLista))
+	for a in laLista:
 		indice=indice+1
 		print 'Directorio ' + str(indice) + '-->'
 		print 'Total de ficheros en directorio: ' + str(len(a))
@@ -26,11 +26,11 @@ def DebugLista(lista_completa):
 def CreaLista(ruta):
 	array_ficheros=[]
 	array_directorios=[]
-	directorios = os.listdir(raiz)
+	directorios = sorted(os.listdir(raiz))
 	for un_dir in directorios:
 		if os.path.isdir(raiz+un_dir):
 
-			directorio_interno = os.listdir(raiz+un_dir)
+			directorio_interno = sorted(os.listdir(raiz+un_dir))
 			array_ficheros=[]
 			for f_interno in directorio_interno:
 				nombre_fichero=raiz+un_dir+'/'+f_interno
@@ -54,7 +54,7 @@ def DameFichero(lista_ficheros,indice_dir,indice_file):
 # Reproduce un fichero y devuelve el descriptor para tratar sobre el
 #-------------------------------------------------------------------
 def PlayFichero(player,fichero):
-	p = Popen([player,'-o','local',fichero],stdout=PIPE,stdin=PIPE,stderr=STDOUT)
+	p = Popen([player,'-o','local',fichero] stdout=PIPE,stdin=PIPE,stderr=STDOUT)
 	return p
 
 #---------------------------------------------------
@@ -64,48 +64,29 @@ def StopReproduccion(p):
 	grep_stdout = p.communicate(input='q')[0]
 	return grep_stdout
 
-#-----------------------------------------------------
-# Devuelve si es la ultima cancion del directorio
-#----------------------------------------------------
-def UltimaCancion(lista_dicheros,directorio,fichero):
-	actual_lista = lista_ficheros[directorio]
-	if fichero==(len(actual_lista)-1):
-		return True
-	return False
-
-#----------------------------------------------------
-# Genera un par de numeros aleatorios para dir y file
-#---------------------------------------------------
-def GeneraShuffleFile(lista_completa):
-	ran_file = random.randint(0,len(lista_completa)-1)
-	registro = lista_completa[ran_file]
-	print "Registro....:"
-	print registro
-	return registro
-
 #------------------------------------------------------
 # Devuelve una lista completa para el shuffle completo
 #------------------------------------------------------
-def GeneraListaCompleta(lista_ficheros):
-	indice=0
-	indice_dir=0
-	indice_en_dir=0
-	lista_completa=[]
-	print 'El numero de elementos es:' + str(len(lista_ficheros))
-	for i in lista_ficheros:
-		print 'Vamos por indice de directorio: ' + str(indice_dir)
-		print 'Numero de elementos en el directorio: ' + str(len(i))
-		indice_en_dir=0;
-		for j in i:
-			lista_completa.append([indice,indice_dir,indice_en_dir,j])
-			indice=indice+1
-			indice_en_dir=indice_en_dir+1;
-		indice_dir=indice_dir+1		
-	
-	# Esto hace el debug de la lista
-	#for p in lista_completa:
-	#	print p
-	return lista_completa
+#def GeneraListaCompleta(lista_ficheros):
+#	indice=0
+#	indice_dir=0
+#	indice_en_dir=0
+#	lista_completa=[]
+#	print 'El numero de elementos es:' + str(len(lista_ficheros))
+#	for i in lista_ficheros:
+#		print 'Vamos por indice de directorio: ' + str(indice_dir)
+#		print 'Numero de elementos en el directorio: ' + str(len(i))
+#		indice_en_dir=0;
+#		for j in i:
+#			lista_completa.append([indice,indice_dir,indice_en_dir,j])
+#			indice=indice+1
+#			indice_en_dir=indice_en_dir+1;
+#		indice_dir=indice_dir+1		
+#	
+#	# Esto hace el debug de la lista
+#	#for p in lista_completa:
+#	#	print p
+#	return lista_completa
 
 #--------------------------------------------
 # Thread que maneja las comunicaciones
@@ -134,12 +115,69 @@ def HiloComunicaciones(valor1,valor2):
 #-------------------------------------
 # La logica para la siguiente cancion
 #------------------------------------
-def SiguienteCancion():
+def SiguienteCancion(adelante):
 	global lista_ficheros		#Esto esta separado en directorios
-	global lista_completa		#Esto es una lista completa
 	global indice_directorio	#Indice directorio actual
 	global indice_fichero		#Indice fichero actual dentro del directorio
-	return lista_completa[0]
+	global modo					# 
+	
+	if modo==0:					# Modo contiguo
+		print 'Modo 0: Continuo todo el disco'
+		if indice_directorio==-1:
+			indice_fichero=0
+			indice_directorio=0
+		else:
+			# Siguiente arriba
+			if adelante==True:
+				if indice_fichero==len(lista_ficheros[indice_directorio])-1:	# Es el ultimo
+					if indice_directorio==len(lista_ficheros)-1:
+						indice_directorio=0
+					else:
+						indice_directorio=indice_directorio+1
+					indice_fichero=0
+				else:
+					indice_fichero=indice_fichero+1
+			else:
+				# Si es hacia atras
+				if indice_fichero==0:
+					if indice_directorio==0:
+						indice_directorio=len(lista_ficheros)-1
+					else:
+						indice_directorio=indice_directorio-1
+				else:
+					indice_fichero=indice_fichero-1
+	elif modo==1:				# Modo directorio
+		print 'Modo 1: Continuo directorio'
+		
+		if indice_directorio==-1:
+			indice_fichero=0
+			indice_directorio=0
+		else:
+			if adelante==True:
+				if indice_fichero==len(lista_ficheros[indice_directorio])-1:
+					indice_fichero=0
+				else:
+					indice_fichero=indice_fichero+1
+			else:
+				if indice_fichero==0:
+					indice_fichero=len(lista_ficheros[indice_directorio])-1
+				else:
+					indice_fichero=indice_fichero-1
+	elif modo==2:
+		print 'Modo 2: Aleatorio todo el disco'
+		ran_dir = random.randint(0,len(lista_ficheros)-1)
+		print 'Directorio entre 0 y ' + str(len(lista_ficheros)-1) + ' Salio: ' + str(ran_dir)
+		ran_file = random.randint(0,len(lista_ficheros[ran_dir])-1)
+		print 'Fichero entre 0 y ' + str(len(lista_ficheros[ran_dir])-1)+ ' Salio: ' + str(ran_file)
+		indice_directorio=ran_dir
+		indice_fichero=ran_file
+	elif modo==3:
+		if indice_directorio==-1:	# Si es la primera vez
+			indice_directorio=0
+		print 'Modo 3: Aleatorio directorio'
+		ran_file = random.randint(0,len(lista_ficheros[indice_directorio])-1)
+		indice_fichero=ran_file
+	return (lista_ficheros[indice_directorio])[indice_fichero]
 
 #############################################
 ########### Programa principal ##############
@@ -150,40 +188,38 @@ player='/usr/bin/omxplayer'
 lista_ficheros=CreaLista(raiz)
 num_dir = len(lista_ficheros)
 
-
-
-
 indice_directorio=-1
 indice_fichero=-1
 fichero_actual=''
 p=-1
-
-modo=2	#0 continuo, 1 directorio actual, 2 aleatorio continuo, 3 aleatorio directorio
+siguiente_usuario=0	# 0: No toco el usuario, 1: Movemos para arriba cancion 2: Movemos para abajo
+modo=3	#0 continuo, 1 directorio actual, 2 aleatorio continuo, 3 aleatorio directorio
 # Arrancamos el hilo de comunicaciones
 #thread.start_new_thread(HiloComunicaciones,(0,0))
 
 
 while True:
 	if num_dir!=0:
-		lista_completa=GeneraListaCompleta(lista_ficheros)
 		print 'Hay '+str(num_dir)+' directorios de musica!!'
-		indice_directorio=0
-		indice_fichero=0
-
-
 		while True:
-			# Si es modo shuffle
-			indice_total=SiguienteCancion()	# Esta hace toda la logistica
+			if siguiente_usuario==0:			# El usuario no toco se avanza
+				nombre=SiguienteCancion(True)	
+			elif siguiente_usuario==1:			# El usuario pulso hacia adelante
+				nombre=SiguienteCancion(True)
+			elif siguiente_usuario==2:			# El usuario pulso hacia atras
+				nombre=SiguienteCancion(False)
+			siguiente_usuario=0	#				# Limpiamos el flag de pulsar el usuario
+				
 			#-- Para saber lo que tocamos
 			print '-----=====##########=====-----'
-			print 'Play Num: \t'+ str(indice_total[0]) 
-			print 'Dir Num:  \t'+ str(indice_total[1])
-			print 'File Num: \t'+ str(indice_total[2])
-			print 'File Name:\t'+ indice_total[3]
+			print 'InDir  Num:  \t'+ str(indice_directorio)
+			print 'InFile Num: \t'+ str(indice_fichero)
+			print ' File Name:\t'+ nombre
 			print '-----=====##########=====-----'
-			p=PlayFichero(player,indice_total[3])
 			#-- End ---
-			time.sleep(2)
+			
+			p=PlayFichero(player,nombre)
+			time.sleep(1)
 			p.wait()
 	else:
 
