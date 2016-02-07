@@ -101,25 +101,26 @@ def HiloComunicaciones(valor1,valor2):
 	HOST=''
 	PORT=9999
 	ADDR = (HOST,PORT)
+	serversock = socket(AF_INET,SOCK_STREAM)
+	serversock.setsockopt(SOL_SOCKET,SO_REUSEADDR,1)
+	serversock.bind(ADDR)
+	serversock.listen(5)
+
 	while 1:
-		serversock = socket(AF_INET,SOCK_STREAM)
-		serversock.setsockopt(SOL_SOCKET,SO_REUSEADDR,1)
-		serversock.bind(ADDR)
-		serversock.listen(5)
 		print 'Esperando conexion...'
 		clientsock,addr = serversock.accept()
 		print 'Conectado...',addr
 		while 1:
 			data = clientsock.recv(BUFF)
 			if not data:
-				time.sleep(1) 
-				continue
+				print 'Socket Recv Error!!!'
+				break
 			print 'data:' + repr(data)
-			if 'next' in data:
+			if 'next_file' in data:
 				print 'Siguiente cancion'
 				siguiente_usuario=1 #esto es hacia adelante
 				StopReproduccion(p)
-			elif 'prev' in data:
+			elif 'prev_file' in data:
 				print 'Anterior cancion'
 				siguiente_usuario=2
 				StopReproduccion(p)
