@@ -54,10 +54,9 @@ def DameFichero(lista_ficheros,indice_dir,indice_file):
 # Reproduce un fichero y devuelve el descriptor para tratar sobre el
 #-------------------------------------------------------------------
 def PlayFichero(player,fichero):
-	# = Popen([player,'-o','local',fichero],stdout=PIPE,stdin=PIPE,stderr=STDOUT)
-	# TODO cambiar 
-	print player,fichero
-	p = Popen([player,fichero],stdout=PIPE,stdin=PIPE,stderr=STDOUT)
+	p = Popen([player,'-o','local',fichero],stdout=PIPE,stdin=PIPE,stderr=STDOUT)
+	#print player,fichero
+	#p = Popen([player,fichero],stdout=PIPE,stdin=PIPE,stderr=STDOUT)
 	return p
 
 #---------------------------------------------------
@@ -212,7 +211,9 @@ def SiguienteCancion(adelante):
 		indice_fichero=ran_file
 	return (lista_ficheros[indice_directorio])[indice_fichero]
 
-
+#---------------------------------------------------------------
+# Cambia de carpeta, adelante=True siguiente, si es false previo
+#--------------------------------------------------------------
 def SiguienteCarpeta(adelante):
 	global indice_directorio
 	global indice_fichero
@@ -240,9 +241,8 @@ def SiguienteCarpeta(adelante):
 ########### Programa principal ##############
 #############################################
 raiz='/media/pendrive/'
-# TODO
-#layer='/usr/bin/omxplayer'
-player='/usr/bin/mplayer'
+player='/usr/bin/omxplayer'
+#player='/usr/bin/mplayer'
 
 lista_ficheros=CreaLista(raiz)
 num_dir = len(lista_ficheros)
