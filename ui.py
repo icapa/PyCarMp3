@@ -76,7 +76,7 @@ def RenderRecText(carpeta,cancion,modo):
 def ConnectPlayer():
 	try:
 		s = socket(AF_INET,SOCK_STREAM)
-		s.connect(("127.0.0.1", 9999))
+		s.connect(('127.0.0.1', 9999))
 	except socket_error as serr:
 		if serr.errno != errno.ECONNREFUSED:
 			# Not the error we are looking for, re-raise
@@ -115,6 +115,9 @@ def BotonPulsado(touchPos):
 # Hilo de recepcion de datos del player
 #---------------------------------------
 def RevFromPlayer(theSock,dummy):
+	global gCarpeta
+	global gFile
+	global gModo
 	while True:
 		try:
 			datos=theSock.recv(1024)
@@ -125,6 +128,9 @@ def RevFromPlayer(theSock,dummy):
 				print 'Datos recibidos:'
 				aaa=datos.split('\n')
 				RenderRecText(aaa[0],aaa[1],aaa[2])
+				gCarpeta=aaa[0]
+				gFile=aaa[1]
+				gModo=aaa[2]
 		except socket_error as serr:
 			print 'Socket Recv excepcion'
 			time.sleep(3)
@@ -174,17 +180,44 @@ while True:
 thread.start_new_thread(RevFromPlayer,(theSock,0))
 
 
+pygame.time.set_timer(USEREVENT+1,5000)
+minutos=0
+protector_minutos=12 # 1 minutos
+protector=False
 
 while True:
 	# Gestion de los eventos
 	for event in pygame.event.get():
+		if event.type == USEREVENT+1:
+			if minutos<protector_minutos:
+				minutos = minutos +1
 		if event.type == pygame.MOUSEBUTTONDOWN:
-			touchPos=(pygame.mouse.get_pos()[0],pygame.mouse.get_pos()[1])
-			print 'Pulsado X: '+str(touchPos[0])+' Y: '+str(touchPos[1])
-			theButton = BotonPulsado(touchPos)
-			comando=OnButton(theButton)
-			if SendToPlayer(theSock,comando)==True:
-				print 'Comando enviado OK'
+			if protector==False:
+				minutos=0
+				touchPos=(pygame.mouse.get_pos()[0],pygame.mouse.get_pos()[1])
+				print 'Pulsado X: '+str(touchPos[0])+' Y: '+str(touchPos[1])
+				theButton = BotonPulsado(touchPos)
+				comando=OnButton(theButton)
+				if SendToPlayer(theSock,comando)==True:
+					print 'Comando enviado OK'
+				else:
+					print 'Comando enviado ERROR'
 			else:
-				print 'Comando enviado ERROR'
+				# Repintamos
+				print 'Salimos de Salva Pantallas'
+				screen.blit(skin, (0, 0))
+				pygame.display.update()
+				RenderRecText(gCarpeta,gFile,gModo)
+				pygame.display.update()
+				protector=False
+				minutos=0
+	if minutos == protector_minutos:
+		minutos = minutos+1 # Lo hago para que solo pase una vez
+		print 'Protege pantallas !!'
+		protector=True
+		s=pygame.Surface((320,240)) # Superficie para borrar
+		s.fill((0,0,0))	# Negro
+		screen.blit(s,(0,0))
+		pygame.display.update()
+
 	time.sleep(0.1)

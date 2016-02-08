@@ -310,7 +310,7 @@ p=-1
 clientsock=-1
 
 siguiente_usuario=0	# 0: No toco el usuario, 1: Movemos para arriba cancion 2: Movemos para abajo
-modo=3	#0 continuo, 1 directorio actual, 2 aleatorio continuo, 3 aleatorio directorio
+modo=0	#0 continuo, 1 directorio actual, 2 aleatorio continuo, 3 aleatorio directorio
 # Arrancamos el hilo de comunicaciones
 thread.start_new_thread(HiloComunicaciones,(0,0))
 estadoPlay=True	# Empezamos reproducciendo
