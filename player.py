@@ -7,6 +7,7 @@ import thread
 import random
 from subprocess import Popen, PIPE, STDOUT
 from socket import *
+from socket import error as socket_error
 #-------------------------------------------------------------------
 # Funcion para imprimir la lista de ficheros separado en directorios
 #-------------------------------------------------------------------
@@ -49,7 +50,6 @@ def DameFichero(lista_ficheros,indice_dir,indice_file):
 	print 'DameFichero -> ' + debug_file
 	return debug_file
 	
-
 #-------------------------------------------------------------------
 # Reproduce un fichero y devuelve el descriptor para tratar sobre el
 #-------------------------------------------------------------------
@@ -96,6 +96,7 @@ def StopReproduccion(p):
 def HiloComunicaciones(valor1,valor2):
 	global modo
 	global siguiente_usuario
+	global clientsock
 	BUFF=1024
 	HOST=''
 	PORT=9999
@@ -109,6 +110,7 @@ def HiloComunicaciones(valor1,valor2):
 		print 'Esperando conexion...'
 		clientsock,addr = serversock.accept()
 		print 'Conectado...',addr
+		EnviaEstado()
 		while 1:
 			data = clientsock.recv(BUFF)
 			if not data:
@@ -132,14 +134,43 @@ def HiloComunicaciones(valor1,valor2):
 				siguiente_usuario=4
 				StopReproduccion(p)
 			elif 'modo' in data:
-				sModo = data.split("=")
-				if len(sModo)==2:
-					elModo = int(sModo[1])
-					if elModo>=0 and elModo<4:
-						modo=elModo
-						print 'Cambiando a modo: '+str(modo)
+				if modo==3:
+					modo=0
+				else:
+					modo=modo+1
+				print 'Cambiado modo: ' + str(modo)
+				EnviaEstado()	# Lo hacemos solo en el modo
 
-				
+#------------------------------------
+# Envio de datos al ui
+#------------------------------------
+def EnviaEstado():
+	global clientsock
+	global lista_ficheros
+	global modo
+	if clientsock==-1:
+		print 'No esta conectado el socket!!'
+		return False
+
+	cadenaPartida=(lista_ficheros[indice_directorio])[indice_fichero].split('/')
+	cancion = cadenaPartida[len(cadenaPartida)-1]
+	directorio = cadenaPartida[len(cadenaPartida)-2]
+	if modo==0:
+		modoTexto='Continuo total'
+	if modo==1:
+		modoTexto='Continuo actual carpeta'
+	if modo==2:
+		modoTexto='Aleatorio total'
+	if modo==3:
+		modoTexto='Aleatorio actual carpeta'
+	bufferEnvio=directorio+'\n'+cancion+'\n'+modoTexto
+	try:
+		clientsock.send(bufferEnvio)
+		return True
+	except socket_error as serr:
+		print 'No se pudo enviar estado'
+		return False
+
 
 
 
@@ -251,6 +282,9 @@ indice_directorio=-1
 indice_fichero=-1
 fichero_actual=''
 p=-1
+
+clientsock=-1
+
 siguiente_usuario=0	# 0: No toco el usuario, 1: Movemos para arriba cancion 2: Movemos para abajo
 modo=3	#0 continuo, 1 directorio actual, 2 aleatorio continuo, 3 aleatorio directorio
 # Arrancamos el hilo de comunicaciones
@@ -286,7 +320,7 @@ while True:
 			print ' File Name:\t'+ nombre
 			print '-----=====##########=====-----'
 			#-- End ---
-			
+			EnviaEstado()
 			p=PlayFichero(player,nombre)
 			time.sleep(1)
 			p.wait()
