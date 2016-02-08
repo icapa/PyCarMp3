@@ -5,9 +5,19 @@ import time
 import threading
 import thread
 import random
+import signal
 from subprocess import Popen, PIPE, STDOUT
 from socket import *
 from socket import error as socket_error
+
+from subprocess import check_output
+
+#-----------------------------------
+# Saca el pid del omxplayer.bin
+#----------------------------------
+def get_pid(name):
+    return check_output(["pidof",name])
+
 #-------------------------------------------------------------------
 # Funcion para imprimir la lista de ficheros separado en directorios
 #-------------------------------------------------------------------
@@ -63,9 +73,17 @@ def PlayFichero(player,fichero):
 # Para la reproduccion
 #---------------------------------------------------
 def StopReproduccion(p):
-	grep_stdout = p.communicate(input='q')[0]
-	return grep_stdout
+	grep_stdout = p.stdin.write('q')
 
+#--------------------------------------------------
+# Para la reproduccion
+#-------------------------------------------------
+def SendPlayPause(p,playPause):
+	global estadoPlay
+	print 'Estamos en: '+str(estadoPlay)+'y vamos a: '+str(playPause)
+	if estadoPlay!=playPause:
+		p.stdin.write('\x20')
+	estadoPlay=playPause	
 #------------------------------------------------------
 # Devuelve una lista completa para el shuffle completo
 #------------------------------------------------------
@@ -133,6 +151,12 @@ def HiloComunicaciones(valor1,valor2):
 				print 'Carpeta anterior'
 				siguiente_usuario=4
 				StopReproduccion(p)
+			elif 'play' in data:
+				print 'Play'
+				SendPlayPause(p,True)
+			elif 'pause' in data:
+				print 'Pausa'
+				SendPlayPause(p,False)
 			elif 'modo' in data:
 				if modo==3:
 					modo=0
@@ -140,7 +164,7 @@ def HiloComunicaciones(valor1,valor2):
 					modo=modo+1
 				print 'Cambiado modo: ' + str(modo)
 				EnviaEstado()	# Lo hacemos solo en el modo
-
+			print 'Recv...Esperando comando!!!--@@#@'
 #------------------------------------
 # Envio de datos al ui
 #------------------------------------
@@ -289,7 +313,7 @@ siguiente_usuario=0	# 0: No toco el usuario, 1: Movemos para arriba cancion 2: M
 modo=3	#0 continuo, 1 directorio actual, 2 aleatorio continuo, 3 aleatorio directorio
 # Arrancamos el hilo de comunicaciones
 thread.start_new_thread(HiloComunicaciones,(0,0))
-
+estadoPlay=True	# Empezamos reproducciendo
 
 while True:
 	if num_dir!=0:
