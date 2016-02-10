@@ -59,16 +59,18 @@ pygame.display.update()
 # Renderizado el texto que llega
 #---------------------------------
 def RenderRecText(carpeta,cancion,modo):
-	s=pygame.Surface((290,94)) # Superficie para borrar
-	s.fill((0,0,0))	# Negro
-	screen.blit(s,(20,35))
-	renCarpeta=font.render('['+carpeta+']',1,(font_color))
-	screen.blit(renCarpeta,(23,40))
-	renFile=font.render(cancion,1,(font_color))
-	screen.blit(renFile,(23,65))
-	renModo=font.render(modo,1,(font_color))
-	screen.blit(renModo,(23,110))
-	pygame.display.update()
+	global protector
+	if protector==False:	# Esto es solo si el protector esta desactivado
+		s=pygame.Surface((290,96)) # Superficie para borrar
+		s.fill((0,0,0))	# Negro
+		screen.blit(s,(20,35))
+		renCarpeta=font.render('['+carpeta+']',1,(font_color))
+		screen.blit(renCarpeta,(23,40))
+		renFile=font.render(cancion,1,(font_color))
+		screen.blit(renFile,(23,65))
+		renModo=font.render(modo,1,(font_color))
+		screen.blit(renModo,(23,110))
+		pygame.display.update()
 
 #----------------------------------
 # Funcion que se conecta al player
@@ -205,11 +207,12 @@ while True:
 			else:
 				# Repintamos
 				print 'Salimos de Salva Pantallas'
+				protector=False
 				screen.blit(skin, (0, 0))
 				pygame.display.update()
 				RenderRecText(gCarpeta,gFile,gModo)
 				pygame.display.update()
-				protector=False
+
 				minutos=0
 	if minutos == protector_minutos:
 		minutos = minutos+1 # Lo hago para que solo pase una vez
