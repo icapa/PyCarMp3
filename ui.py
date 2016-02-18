@@ -12,7 +12,7 @@ import errno
 from socket import error as socket_error
 
 os.environ["SDL_FBDEV"] = "/dev/fb1"
-os.environ["SDL_MOUSEDEV"] = "/dev/input/event0"
+os.environ["SDL_MOUSEDEV"] = "/dev/input/event2"
 os.environ["SDL_MOUSEDRV"] = "TSLIB"
 
 
@@ -59,9 +59,9 @@ pygame.display.update()
 # Renderizado el texto que llega
 #---------------------------------
 def RenderRecText(carpeta,cancion,modo):
-	global protector
-	if protector==False:	# Esto es solo si el protector esta desactivado
-		s=pygame.Surface((290,96)) # Superficie para borrar
+	if protector==False:
+		s=pygame.Surface((290,94)) # Superficie para borrar
+		global protector
 		s.fill((0,0,0))	# Negro
 		screen.blit(s,(20,35))
 		renCarpeta=font.render('['+carpeta+']',1,(font_color))
@@ -171,6 +171,7 @@ def OnButton(id_boton):
 #-----=====##########=====-----
 
 # Conectamos al socket
+#
 while True:
 	theSock = ConnectPlayer()
 	if theSock!=-1:
@@ -210,10 +211,9 @@ while True:
 				protector=False
 				screen.blit(skin, (0, 0))
 				pygame.display.update()
+				protector=False
 				RenderRecText(gCarpeta,gFile,gModo)
 				pygame.display.update()
-
-				minutos=0
 	if minutos == protector_minutos:
 		minutos = minutos+1 # Lo hago para que solo pase una vez
 		print 'Protege pantallas !!'

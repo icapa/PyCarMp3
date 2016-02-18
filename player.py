@@ -291,6 +291,38 @@ def SiguienteCarpeta(adelante):
 			indice_fichero=0	# Siempre empezamos por la uno
 	return (lista_ficheros[indice_directorio])[indice_fichero]
 
+#--------------------------------------------
+# Guarda la cancion actual
+#--------------------------------------------
+def GuardaUltimaCancion():
+	global indice_directorio
+	global indice_fichero
+	global nombre
+	f=open('/home/pi/.lastSong','w')
+	f.write(str(indice_directorio)+','+str(indice_fichero)+','+nombre)
+	f.close()
+	return
+
+#-------------------------------------------
+# Lee la ultima cancion si existe
+#------------------------------------------
+def LeeUltimaCancion():
+	try:
+		f=open('/home/pi/.lastSong','r')
+		s=f.readline()
+		f.close()
+	except IOError:
+		return [-1,-1,'']
+	
+	p=s.split(',')
+	print 'Numero de elementos= ' + str(len(p))
+	if len(p)==3:
+		return [int(p[0]),int(p[1]),p[2]]
+	else:
+		return [-1,-1,'']
+
+	
+
 
 #############################################
 ########### Programa principal ##############
@@ -304,6 +336,7 @@ num_dir = len(lista_ficheros)
 
 indice_directorio=-1
 indice_fichero=-1
+nombre=''
 fichero_actual=''
 p=-1
 
@@ -314,6 +347,11 @@ modo=0	#0 continuo, 1 directorio actual, 2 aleatorio continuo, 3 aleatorio direc
 # Arrancamos el hilo de comunicaciones
 thread.start_new_thread(HiloComunicaciones,(0,0))
 estadoPlay=True	# Empezamos reproducciendo
+
+[indice_directorio,indice_fichero,nombre]=LeeUltimaCancion()
+print 'Leyendo ultima cancion...'
+print str(indice_directorio),str(indice_fichero),nombre
+
 
 while True:
 	if num_dir!=0:
@@ -335,8 +373,8 @@ while True:
 				print 'El usuario Carpeta PREV'
 				nombre = SiguienteCarpeta(False)
 			siguiente_usuario=0
-			
-				
+			#-- Por la cancion que vamos...a fichero
+			GuardaUltimaCancion()				
 			#-- Para saber lo que tocamos
 			print '-----=====##########=====-----'
 			print 'InDir  Num:  \t'+ str(indice_directorio)
