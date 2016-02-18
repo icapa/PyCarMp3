@@ -34,8 +34,10 @@ buttonFolderPrev=[66,191,106,233]
 buttonPlay=[192,145,244,185]
 buttonPause=[192,186,244,226]
 buttonModo=[264,167,308,207]
+buttonSalir=[0,0,20,20]
+
 #-- Los meto todos en un array para la comparacion facil
-buttons=[buttonFilePrev,buttonFileNext,buttonFolderNext,buttonFolderPrev,buttonPlay,buttonPause,buttonModo]
+buttons=[buttonFilePrev,buttonFileNext,buttonFolderNext,buttonFolderPrev,buttonPlay,buttonPause,buttonModo,buttonSalir]
 
 
 
@@ -59,9 +61,10 @@ pygame.display.update()
 # Renderizado el texto que llega
 #---------------------------------
 def RenderRecText(carpeta,cancion,modo):
+	global protector
 	if protector==False:
 		s=pygame.Surface((290,94)) # Superficie para borrar
-		global protector
+
 		s.fill((0,0,0))	# Negro
 		screen.blit(s,(20,35))
 		renCarpeta=font.render('['+carpeta+']',1,(font_color))
@@ -166,6 +169,9 @@ def OnButton(id_boton):
 	if id_boton==6:
 		print 'Pulsado MODO'
 		return 'modo'
+	if id_boton==7:
+		print 'Apagamos!!'
+		system('sudo halt')
 #-----=====##########=====-----
 # 	Programa principal 
 #-----=====##########=====-----
