@@ -24,7 +24,7 @@ os.environ["SDL_MOUSEDRV"] = "TSLIB"
 #Pulsado X: 218 Y: 165
 #Pulsado X: 212 Y: 206
 #Pulsado X: 288 Y: 187
-
+#Pulsado X: 30 Y: 19
 
 #-- Asi es la agrupacion de botones
 buttonFilePrev=[13,164,54,204]
@@ -34,7 +34,7 @@ buttonFolderPrev=[66,191,106,233]
 buttonPlay=[192,145,244,185]
 buttonPause=[192,186,244,226]
 buttonModo=[264,167,308,207]
-buttonSalir=[0,0,20,20]
+buttonSalir=[13,9,54,29]
 
 #-- Los meto todos en un array para la comparacion facil
 buttons=[buttonFilePrev,buttonFileNext,buttonFolderNext,buttonFolderPrev,buttonPlay,buttonPause,buttonModo,buttonSalir]
@@ -171,7 +171,7 @@ def OnButton(id_boton):
 		return 'modo'
 	if id_boton==7:
 		print 'Apagamos!!'
-		system('sudo halt')
+		return 'salir'
 #-----=====##########=====-----
 # 	Programa principal 
 #-----=====##########=====-----
@@ -207,6 +207,9 @@ while True:
 				print 'Pulsado X: '+str(touchPos[0])+' Y: '+str(touchPos[1])
 				theButton = BotonPulsado(touchPos)
 				comando=OnButton(theButton)
+				if comando=='salir':
+					print 'ADIOSSSSSSSS!!!!'
+					os.system("sudo halt")
 				if SendToPlayer(theSock,comando)==True:
 					print 'Comando enviado OK'
 				else:

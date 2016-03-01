@@ -157,6 +157,9 @@ def HiloComunicaciones(valor1,valor2):
 			elif 'pause' in data:
 				print 'Pausa'
 				SendPlayPause(p,False)
+			elif 'salir' in data:
+				print 'Adiossssss'
+				system('sudo halt')
 			elif 'modo' in data:
 				if modo==3:
 					modo=0
